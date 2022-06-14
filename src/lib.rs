@@ -6,7 +6,7 @@ macro_rules! r {($r:expr; $x:pat,$o:expr; $y:pat,$e:expr) => (match $r {Ok($x)=>
 macro_rules! a {($a:expr) => (assert!($a))}
 macro_rules! ae {($l:expr, $r:expr) => (assert_eq!($l,$r))}
 macro_rules! l {($($x:pat,$v:expr),+; $($t:expr);+) => ({$(let $x = $v);+; $($t);+})}
-macro_rules! m {($e:expr) => (&mut $e)}
+macro_rules! m {($e:expr) => (&mut $e);  ($e:expr, $r:expr) => (&mut $e[$r])}
 
 macro_rules! u8  {($n:expr) => ($n as u8) }  macro_rules! i8  {($n:expr) => ($n as i8) }
 macro_rules! u16 {($n:expr) => ($n as u16)}  macro_rules! i16 {($n:expr) => ($n as i16)}
@@ -40,10 +40,19 @@ pub struct Ar {d:Vec<u32>, h:Vec<u32>}
 
 impl Ar {
 mm!{
-    al(s, z:uz) (u32, &mut[u32]) {l![l,s.d.len();  s.d.resize(l+z, 0);  (u32!(l), m![s.d[l..]])]}
+    al(s, p:uz) (u32, &mut[u32])
+      { a!(p<0x10000000);  l![l,s.d.len();  s.d.resize(l+1+p, 0);  (u32!(l), m![s.d, l..])] }
 }
 }
 
 pub fn mr(a: &mut Ar, s: &[u8], e: &[u8])-> u32
-  { let l = s.len();  a!(l==e.len() && l<0x10000000);  let (r,d) = a.al(cduz(2*l+3, 4));
-    d[0] = u32!(Nk::R) + u32!(l)<<4;  l![d,u32bm(m!(d[1..])),  l,cy(d,s);  cy(m!(d[l..]),e)];  r }
+  { let l = s.len();  a!(l==e.len());  let (r,d) = a.al(cduz(2*l, 4));
+    d[0] = u32!(Nk::R) + u32!(l)<<4;  l![d,u32bm(m![d,1..]), l,cy(d,s); cy(m![d,l..], e)];  r }
+pub fn ms(a: &mut Ar, s: &[u8])-> u32
+  { let l = s.len();  let (r,d) = a.al(cduz(l,4));
+    d[0] = u32!(Nk::S) + u32!(l)<<4;  l![d,u32bm(m![d,1..]); cy(d,s)];  r                     }
+
+fn m1(a: &mut Ar, k:Nk, c:u32)-> u32
+  { a!(c<0x10000000);  let (r,d) = a.al(0);  d[0] = u32!(k) + u32!(c)<<4;  r                    }
+fn mm(a: &mut Ar, k:Nk, c:&[u32])-> u32
+  { let l = c.len();   let (r,d) = a.al(l);  d[0] = u32!(k) + u32!(l)<<4;  cy(m![d,1..], c);  r }
