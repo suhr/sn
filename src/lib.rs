@@ -1,5 +1,7 @@
 use std::hash::{BuildHasher, Hasher};
 
+use ahash::RandomState as RSt;
+
 type O<T> = Option<T>;  type R<T,E> = Result<T,E>;
 
 macro_rules! bE
@@ -26,8 +28,8 @@ macro_rules! u64 {($n:expr) => ($n as u64)}  macro_rules! i64 {($n:expr) => ($n 
 macro_rules! uz  {($n:expr) => ($n as uz) }  macro_rules! iz  {($n:expr) => ($n as uz) }
 
 macro_rules! mr
-  { ($n:ident, $s:ident; $($a:ident:$t:ty),+; $r:ty $b:block) =>
-        (fn $n(&self, $($a:$t),+)-> $r {let $s=self; $b});          }
+  { ($($n:ident($s:ident, $($a:ident:$t:ty),*) $r:ty $b:block)+) =>
+    ($(fn $n(&self, $($a:$t),*)-> $r {let $s=self; $b})+);  }
 macro_rules! mm
   { ($($n:ident($s:ident, $($a:ident:$t:ty),*) $r:ty $b:block)+) =>
         ($(fn $n(&mut self, $($a:$t),*)-> $r {let $s=self; $b})+);  }
@@ -49,16 +51,27 @@ const T:bool = true;  const F:bool = false;
 
 #[derive(Clone,Copy,PartialEq,Eq,PartialOrd,Ord)] enum Nk {R=0,S, C,K, O,A,N, V}
 
-pub struct Ar {d:Vec<u32>, h:Box<[u32]>, hl:uz, r: ahash::RandomState}
+pub struct Ar {d:Vec<u32>, h:Box<[u32]>, hl:uz, r: RSt}
+
+fn hb(s: &RSt, b: &[u8])-> u64 {l![mut h = s.build_hasher()];  h.write(b);  h.finish()}
 
 impl Ar {
+mr!{
+    gt(s, i:u32) &[u32]
+      {l![t = i&0xf, l = i>>4, (nr,ns) = (u32!(Nk::R), u32!(Nk::S)),
+          d = 2*uz!(i==nr) + 4*uz!(i==ns) + uz!(i>ns)                ]; todo!()}
+    fd(s, d:&[u32]) u32
+      { l![l=s.h.len(), p=uz!(hb(&s.r, u32b(d)))];
+        for i in 0..l
+          {l![i=(p+i)%l, v=&s.h[i]];  bE![*v==0; r![0];];  bE![todo!(); todo!(); todo!()]}
+        0                                                                                  }
+}
 mm!{
     al(s, p:uz) (u32, &mut[u32])
-      { a!(p<0x10000000);  l![l=s.d.len()];  s.d.resize(l+1+p, 0);  (u32!(l), m![s.d, l..]) }
+      { a!(p < 1<<24);  l![l=s.d.len()];  s.d.resize(l+1+p, 0);  (u32!(l), m![s.d, l..]) }
     rg(s, id:u32, d:&[u32]) ()
-      { l![l=s.h.len()];  bE![2*s.hl > l; s.rh(); ];
-        let mut h = s.r.build_hasher();  h.write(u32b(d));  let p = uz![h.finish()] % s.h.len();
-        for i in 0..l {l![v=m![s.h, (p+i)%l]];  bE![*v==0; {s.hl+=1; r![*v=id+1]}; ]}            }
+      { l![l=s.h.len()];  bE![2*s.hl > l; s.rh(); ];  l![p = uz!(hb(&s.r, u32b(d)))%l];
+        for i in 0..l {l![v=m![s.h, (p+i)%l]];  bE![*v==0; {s.hl+=1; r![*v=id+1]}; ]}    }
     rh(s,) () {}
 }
 }
