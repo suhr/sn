@@ -52,15 +52,15 @@ const T:bool = true;  const F:bool = false;
 
 #[derive(Clone,Copy,PartialEq,Eq,PartialOrd,Ord)] enum Nk {R=0,S, C,K, O,A,N, V}
 
-pub struct Ar {d:Vec<u32>, h:Box<[u32]>, hl:uz, r: RSt}
+pub struct Ar {d:Vec<u32>, h:Box<[u32]>, hl:uz, r:RSt}
 
 fn hb(s: &RSt, b: &[u8])-> u64 {l![mut h = s.build_hasher()];  h.write(b);  h.finish()}
 
 impl Ar {
 mr!{
     gt(s, i:u32) &[u32]
-      { l![i=uz!(i-1), v=&s.h[i], t=v&0xf, l=uz!(v>>4), ns=u32!(Nk::S),
-           d = 2*uz!(t==u32!(Nk::R)) + 4*uz!(t==ns) + uz!(t>ns)        ];
+      { l![i=uz!(i-1), v=&s.h[i], t=v&0xf, l=uz!(v>>4), ns=u32!(Nk::S)];
+        l![d = 2*uz!(t==u32!(Nk::R)) + 4*uz!(t==ns) + uz!(t>ns)];
         &s.h[i..i+cduz(l,d)]                                                         }
     fd(s, d:&[u32]) u32
       { l![l=s.h.len(), p=uz!(hb(&s.r, u32b(d)))];
