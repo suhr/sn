@@ -19,7 +19,8 @@ macro_rules! rE
 macro_rules! a {($a:expr) => (assert!($a))}
 macro_rules! l {($($x:pat = $v:expr),+) => ($(let $x = $v);+;)}
 macro_rules! m {($e:expr) => (&mut $e);  ($e:expr, $r:expr) => (&mut $e[$r])}
-macro_rules! r {() => (return);  ($e:expr) => (return $e)}
+macro_rules! r
+  { () => (return);  ($e:expr) => (return $e);  ($c:expr; $e:expr) => (bE![$c; return $e;]) }
 
 macro_rules! u8  {($n:expr) => ($n as u8) }  macro_rules! i8  {($n:expr) => ($n as i8) }
 macro_rules! u16 {($n:expr) => ($n as u16)}  macro_rules! i16 {($n:expr) => ($n as i16)}
@@ -58,20 +59,20 @@ fn hb(s: &RSt, b: &[u8])-> u64 {l![mut h = s.build_hasher()];  h.write(b);  h.fi
 impl Ar {
 mr!{
     gt(s, i:u32) &[u32]
-      {l![t = i&0xf, l = i>>4, (nr,ns) = (u32!(Nk::R), u32!(Nk::S)),
-          d = 2*uz!(i==nr) + 4*uz!(i==ns) + uz!(i>ns)                ]; todo!()}
+      { l![i=uz!(i-1), v=&s.h[i], t=v&0xf, l=uz!(v>>4), ns=u32!(Nk::S),
+           d = 2*uz!(t==u32!(Nk::R)) + 4*uz!(t==ns) + uz!(t>ns)        ];
+        &s.h[i..i+cduz(l,d)]                                                         }
     fd(s, d:&[u32]) u32
       { l![l=s.h.len(), p=uz!(hb(&s.r, u32b(d)))];
-        for i in 0..l
-          {l![i=(p+i)%l, v=&s.h[i]];  bE![*v==0; r![0];];  bE![todo!(); todo!(); todo!()]}
-        0                                                                                  }
+        for i in 0..l {l![i=(p+i)%l, id=s.h[i]];  r![id==0; 0]; r![d==s.gt(id); id]}
+        0                                                                            }
 }
 mm!{
     al(s, p:uz) (u32, &mut[u32])
       { a!(p < 1<<24);  l![l=s.d.len()];  s.d.resize(l+1+p, 0);  (u32!(l), m![s.d, l..]) }
     rg(s, id:u32, d:&[u32]) ()
-      { l![l=s.h.len()];  bE![2*s.hl > l; s.rh(); ];  l![p = uz!(hb(&s.r, u32b(d)))%l];
-        for i in 0..l {l![v=m![s.h, (p+i)%l]];  bE![*v==0; {s.hl+=1; r![*v=id+1]}; ]}    }
+      { l![l=s.h.len()];  bE![2*s.hl > l; s.rh();];  l![p = uz!(hb(&s.r, u32b(d)))%l];
+        for i in 0..l {l![v=m![s.h, (p+i)%l]];  r![*v==0; {s.hl+=1; *v=id+1}]}           }
     rh(s,) () {}
 }
 }
