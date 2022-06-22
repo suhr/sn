@@ -2,31 +2,8 @@ use std::hash::{BuildHasher, Hasher};
 
 use ahash::RandomState as RSt;
 
-type O<T> = Option<T>;  type R<T,E> = Result<T,E>;
-
-macro_rules! bE
-  { ($c:expr; $t:expr; $e:expr) => (if $c {$t} else {$e});
-    ($c:expr; $t:expr;        ) => (if $c {$t} else {  });
-    ($c:expr;        ; $e:expr) => (if $c {  } else {$e}); }
-macro_rules! oE
-  { ($o:expr; $x:pat,$s:expr; $n:expr)        => (match $o {Some($x)=>$s, None=>$n});
-    ($o:expr; $x:pat,$s:expr;        )        => (match $o {Some($x)=>$s, None=>()});
-    ($o:expr;               ; $n:expr)        => (match $o {Some(_) =>(), None=>$n}); }
-macro_rules! rE
-  { ($r:expr; $x:pat,$o:expr; $y:pat,$e:expr) => (match $r {Ok($x)=>$o, Err($y)=>$e});
-    ($r:expr; $x:pat,$o:expr;               ) => (match $r {Ok($x)=>$o, Err(_) =>()});
-    ($r:expr;               ; $y:pat,$e:expr) => (match $r {Ok(_) =>(), Err($y)=>$e}); }
-macro_rules! a {($a:expr) => (assert!($a))}
-macro_rules! l {($($x:pat = $v:expr),+) => ($(let $x = $v);+;)}
-macro_rules! m {($e:expr) => (&mut $e);  ($e:expr, $r:expr) => (&mut $e[$r])}
-macro_rules! r
-  { () => (return);  ($e:expr) => (return $e);  ($c:expr; $e:expr) => (bE![$c; return $e;]) }
-
-macro_rules! u8  {($n:expr) => ($n as u8) }  macro_rules! i8  {($n:expr) => ($n as i8) }
-macro_rules! u16 {($n:expr) => ($n as u16)}  macro_rules! i16 {($n:expr) => ($n as i16)}
-macro_rules! u32 {($n:expr) => ($n as u32)}  macro_rules! i32 {($n:expr) => ($n as i32)}
-macro_rules! u64 {($n:expr) => ($n as u64)}  macro_rules! i64 {($n:expr) => ($n as i64)}
-macro_rules! uz  {($n:expr) => ($n as uz) }  macro_rules! iz  {($n:expr) => ($n as uz) }
+use terse::{*, m::*};
+mod terse;
 
 macro_rules! mr
   { ($($n:ident($s:ident, $($a:ident:$t:ty),*) $r:ty $b:block)+) =>
@@ -43,12 +20,6 @@ fn cy<T:Copy>(d: &mut[T], s:&[T])-> uz
   { l![l=d.len().min(s.len())];  d[..l].copy_from_slice(&s[..l]);  l             }
 
 fn cduz(l:uz, r:uz)-> uz {l/r + uz!(l%r != 0)}
-
-const T:bool = true;  const F:bool = false;
-#[allow(non_camel_case_types)] type uz = usize;
-#[allow(non_camel_case_types)] type iz = isize;
-
-// #[cfg(test)] mod tests {}
 
 #[derive(Clone,Copy,PartialEq,Eq,PartialOrd,Ord)] enum Nk {R=0,S, C,K, O,A,N, V}
 
